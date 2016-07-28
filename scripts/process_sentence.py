@@ -55,7 +55,7 @@ def process_ncbi(in_path, class_out_path, word_out_path):
                 disease_word = []
                 flag = False
     word_out_file = open(word_out_path, 'w')
-    for x in xrange(0,10):
+    for x in xrange(0,200):
         for content in contents:
             content = content.replace(',','')
             content = content.replace('.','')

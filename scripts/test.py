@@ -44,8 +44,8 @@ def load_bin_vec(fname):
 
 w2v, layer_size = load_bin_vec('../data/NCBI/NCBI_corpus/word_train.bin')
 
-theta1 = theano.shared(np.array(np.random.rand(layer_size + 1, 2*layer_size), dtype = theano.config.floatX))
-theta2 = theano.shared(np.array(np.random.rand(2*layer_size + 1, 3), dtype = theano.config.floatX))
+theta1 = theano.shared(np.array(np.random.rand(layer_size + 1, layer_size*2), dtype = theano.config.floatX))
+theta2 = theano.shared(np.array(np.random.rand(layer_size*2 + 1, 3), dtype = theano.config.floatX))
 hidden_layer = layer(x, theta1)
 out = layer(hidden_layer, theta2)
 fc = T.sum((out - y)**2)
@@ -55,9 +55,10 @@ run_forward = theano.function(inputs=[x], outputs=out)
 file_train = open('../data/NCBI/NCBI_corpus/class_train.txt','r')
 cur_cost = 0
 j=0
-for i in range(10):
+for i in range(50):
     for line in file_train:
         content = line.split(' ')
+        content[1] = content[1].replace('\n','')
         if content[1] in w2v:
             exp_y = np.array([0,0,1], dtype=theano.config.floatX)
             if content[0] == 'B':
@@ -67,26 +68,28 @@ for i in range(10):
             input = w2v[content[1]]
             cur_cost = cost(input, exp_y) 
             j += 1
-            if j %50 == 0:
+            if j%500 == 0:
                  print('cost : %s'%(cur_cost,))
-
-file_test = open('../data/NCBI/NCBI_corpus/word_test.txt','r')
+file_train.seek(0)
+file_test = open('../data/NCBI/NCBI_corpus/word_test.txt','w')
 right = 0
 total = 0
 for line in file_train:
     content = line.split(' ')
-    y = run_forward(content[1])
-    if max(y) == y[0]:
-        label = 'B'
-    elif max(y) == y[1]:
-        label = 'I'
-    else:
-        label = 'O'
-    if label == content[0]:
-        right = right + 1
-    file_test.write(label + ' ' + content[1])
+    content[1] = content[1].replace('\n','')
+    if content[1] in w2v:
+        y = run_forward(w2v[content[1]])
+        if max(y) == y[0]:
+            label = 'B'
+        elif max(y) == y[1]:
+            label = 'I'
+        else:
+            label = 'O'
+        if label == content[0]:
+            right = right + 1
+        file_test.write(label + ' ' + content[1])
     total = total + 1
-print(right)
-print(total)
+print("right :%d" % right)
+print("total :%d" % total)
 file_train.close()
 file_test.close()
