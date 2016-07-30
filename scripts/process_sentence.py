@@ -1,3 +1,4 @@
+import re
 
 def get_content(in_file, out_file):
     in_file = open(in_file,'r')
@@ -72,9 +73,32 @@ def process_ncbi(in_path, class_out_path, word_out_path):
     in_file.close()
     out_file.close()
     return
-
+def process_ncbi_into_sentence(src_path, dst_path):
+    pattern = re.compile("\\(.*?\\)")
+    with open(src_path, 'r') as src, open(dst_path,'w') as dst:
+        content = src.read()
+        abstracts = content.split('\n')
+        for abstract in abstracts:
+            results = pattern.findall(abstract)
+            for result in results:
+                abstract = abstract.replace(result,'')
+            sentences = abstract.split('\t')
+            title = sentences[1].replace('.','')
+            sentences = sentences[2].split(' . ')
+            sentences = sentences[0:len(sentences)-2]
+            sentences.append(title)
+            for sentence in sentences:
+                if '</category>' in sentence:
+                    sentence = sentence.replace('<category=\"SpecificDisease\">','')
+                    sentence = sentence.replace('<category=\"Modifier\">','')
+                    sentence = sentence.replace('<category=\"DiseaseClass\">','')
+                    sentence = sentence.replace('<category=\"CompositeMention\">','')
+                    sentence = sentence.replace('</category>','')
+                    dst.write('%d %s\n'%(1,sentence))
+                else:
+                    dst.write('%d %s\n'%(0,sentence))
 if __name__ == "__main__":
    # get_content('../data/abstract/finalresult.txt','../data/abstracts.txt')      
-   process_ncbi('../data/NCBI/NCBI_corpus/NCBI_corpus_training.txt', '../data/NCBI/NCBI_corpus/class_train.txt','../data/NCBI/NCBI_corpus/word_train.txt' ) 
-
+   #process_ncbi('../data/NCBI/NCBI_corpus/NCBI_corpus_training.txt', '../data/NCBI/NCBI_corpus/class_train.txt','../data/NCBI/NCBI_corpus/word_train.txt' ) 
+   process_ncbi_into_sentence('../data/NCBI/NCBI_corpus/NCBI_corpus_training.txt','../data/NCBI/NCBI_corpus/sentence_train.txt')
 
